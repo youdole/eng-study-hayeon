@@ -121,7 +121,7 @@ function initializeManualInput() {
             uploadedPreview.innerHTML = '';
             viewQuestionsBtn.style.display = 'none';
             clearQuestionsBtn.style.display = 'none';
-            problemTypeSection.style.display = 'none';
+            // problemTypeSection은 항상 보이게 유지
             alert('문제가 삭제되었습니다.');
         }
     });
@@ -838,10 +838,25 @@ function initializeProblemType() {
             btn.classList.add('active');
             selectedProblemType = btn.dataset.problemType;
             console.log('선택된 문제 유형:', selectedProblemType);
+            
+            // 샘플 버튼 텍스트 업데이트
+            updateSampleButtonText();
+            
             // 시작 버튼은 항상 활성화
             startBtn.disabled = false;
         });
     });
+    
+    // 초기 샘플 버튼 텍스트 설정
+    updateSampleButtonText();
+}
+
+// ==================== 샘플 버튼 텍스트 업데이트 ====================
+function updateSampleButtonText() {
+    const sampleBtnText = selectedProblemType === 'A' 
+        ? '샘플 테스트 - 단어 (5문제)' 
+        : '샘플 테스트 - 예문 (5문제)';
+    sampleBtn.querySelector('span').textContent = sampleBtnText;
 }
 
 // ==================== 시작 버튼 업데이트 ====================
@@ -872,15 +887,18 @@ function initializeButtons() {
     // 샘플 테스트 버튼
     sampleBtn.addEventListener('click', async () => {
         try {
+            // 선택된 문제 타입에 따라 샘플 데이터 파일 선택
+            const sampleFile = selectedProblemType === 'A' ? 'sample-data-typeA.json' : 'sample-data-typeB.json';
+            
             // 샘플 데이터 로드
-            const response = await fetch('sample-data.json');
+            const response = await fetch(sampleFile);
             const sampleQuestions = await response.json();
             
             // 데이터를 localStorage에 저장
             localStorage.setItem('quizType', selectedQuizType);
             localStorage.setItem('quizMode', selectedQuizMode);
             localStorage.setItem('questions', JSON.stringify(sampleQuestions));
-            localStorage.setItem('problemType', 'A'); // 샘플은 A타입
+            localStorage.setItem('problemType', selectedProblemType);
             localStorage.setItem('isRetry', 'false');
             
             // 문제 풀이 페이지로 이동

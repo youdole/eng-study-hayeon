@@ -108,10 +108,17 @@ function initializeTTS() {
 
 // ==================== 출제 방식 선택 초기화 ====================
 function initializeQuizSetup() {
+    console.log('=== initializeQuizSetup 디버깅 ===');
+    console.log('questions:', questions);
+    console.log('questions.length:', questions ? questions.length : 'undefined');
+    
     // questions가 로드된 후에만 문제 시작
     if (questions && questions.length > 0) {
+        console.log('✅ 문제 시작!');
         quizStarted = true;
         displayQuestion();
+    } else {
+        console.log('❌ questions가 비어있거나 없음!');
     }
 }
 
@@ -405,6 +412,9 @@ function loadQuizData() {
     const questionsData = localStorage.getItem('questions');
     isRetryMode = localStorage.getItem('isRetry') === 'true';
 
+    console.log('=== loadQuizData 디버깅 ===');
+    console.log('questionsData:', questionsData);
+
     if (!questionsData) {
         alert('문제 데이터가 없습니다. 처음부터 다시 시작해주세요.');
         window.location.href = 'index.html';
@@ -412,6 +422,8 @@ function loadQuizData() {
     }
 
     questions = JSON.parse(questionsData);
+    console.log('questions 배열:', questions);
+    console.log('questions.length:', questions.length);
     
     // 재시도 모드인 경우
     if (isRetryMode) {
@@ -427,11 +439,18 @@ function loadQuizData() {
 
 // ==================== 문제 표시 ====================
 function displayQuestion() {
+    console.log('=== displayQuestion 디버깅 ===');
+    console.log('currentQuestionIndex:', currentQuestionIndex);
+    console.log('questions.length:', questions.length);
+    console.log('조건 체크:', currentQuestionIndex >= questions.length);
+    
     if (currentQuestionIndex >= questions.length) {
+        console.log('❌ 결과 화면으로 이동!');
         showResults();
         return;
     }
 
+    console.log('✅ 문제 표시!');
     const currentQ = getCurrentQuestionData();
     const meaningEl = document.getElementById('meaning');
     const exampleEl = document.getElementById('example');

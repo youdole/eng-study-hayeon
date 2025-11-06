@@ -296,42 +296,84 @@ function selectVoice() {
     console.log('영어 음성 개수:', englishVoices.length);
     
     if (preferredGender === 'female') {
-        // 여성 음성 찾기
-        // 1순위: 이름에 'Female' 포함
+        // 젊고 맑은 여성 음성 찾기
+        // 1순위: Samantha (iOS - 젊고 맑은 여성 음성)
         let femaleVoice = englishVoices.find(voice => 
-            voice.name.toLowerCase().includes('female')
+            voice.name.toLowerCase().includes('samantha')
         );
         
-        // 2순위: Google 음성 (보통 여성)
+        // 2순위: Google 여성 음성 (UK English Female - 맑은 목소리)
         if (!femaleVoice) {
             femaleVoice = englishVoices.find(voice => 
                 voice.name.toLowerCase().includes('google') &&
-                !voice.name.toLowerCase().includes('male')
+                voice.name.toLowerCase().includes('uk') &&
+                voice.name.toLowerCase().includes('female')
             );
         }
         
-        // 3순위: Samantha, Victoria, Karen 등 여성 이름
+        // 3순위: Google US 여성 음성
         if (!femaleVoice) {
-            const femaleNames = ['samantha', 'victoria', 'karen', 'susan', 'fiona'];
             femaleVoice = englishVoices.find(voice => 
-                femaleNames.some(name => voice.name.toLowerCase().includes(name))
+                voice.name.toLowerCase().includes('google') &&
+                voice.name.toLowerCase().includes('female')
+            );
+        }
+        
+        // 4순위: 다른 젊은 여성 이름들
+        if (!femaleVoice) {
+            const youngFemaleNames = ['nicky', 'zira', 'susan'];
+            femaleVoice = englishVoices.find(voice => 
+                youngFemaleNames.some(name => voice.name.toLowerCase().includes(name))
+            );
+        }
+        
+        // 5순위: Female이 포함된 음성
+        if (!femaleVoice) {
+            femaleVoice = englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('female')
             );
         }
         
         currentVoice = femaleVoice || englishVoices[0];
     } else {
-        // 남성 음성 찾기
-        // 1순위: 이름에 'Male' 포함
+        // 젊고 맑은 남성 음성 찾기
+        // 1순위: Daniel (iOS - 젊고 맑은 남성 음성)
         let maleVoice = englishVoices.find(voice => 
-            voice.name.toLowerCase().includes('male') &&
-            !voice.name.toLowerCase().includes('female')
+            voice.name.toLowerCase().includes('daniel')
         );
         
-        // 2순위: Daniel, Alex, Fred 등 남성 이름
+        // 2순위: Google 남성 음성 (UK English Male)
         if (!maleVoice) {
-            const maleNames = ['daniel', 'alex', 'fred', 'tom', 'james'];
             maleVoice = englishVoices.find(voice => 
-                maleNames.some(name => voice.name.toLowerCase().includes(name))
+                voice.name.toLowerCase().includes('google') &&
+                voice.name.toLowerCase().includes('uk') &&
+                voice.name.toLowerCase().includes('male') &&
+                !voice.name.toLowerCase().includes('female')
+            );
+        }
+        
+        // 3순위: Google US 남성 음성
+        if (!maleVoice) {
+            maleVoice = englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google') &&
+                voice.name.toLowerCase().includes('male') &&
+                !voice.name.toLowerCase().includes('female')
+            );
+        }
+        
+        // 4순위: 다른 젊은 남성 이름들
+        if (!maleVoice) {
+            const youngMaleNames = ['james', 'tom', 'david'];
+            maleVoice = englishVoices.find(voice => 
+                youngMaleNames.some(name => voice.name.toLowerCase().includes(name))
+            );
+        }
+        
+        // 5순위: Male이 포함된 음성
+        if (!maleVoice) {
+            maleVoice = englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('male') &&
+                !voice.name.toLowerCase().includes('female')
             );
         }
         

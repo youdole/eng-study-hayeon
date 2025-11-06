@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 스펠링 테스트 - 문제 풀이</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="quiz-page">
+    <!-- 햄버거 메뉴 -->
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+        <div class="menu-dropdown" id="menuDropdown">
+            <a href="index.html">📝 새 문제 만들기</a>
+            <button id="resetBtn">🔄 문제 리셋</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header class="quiz-header">
+            <h1>✏️ 영어 스펠링 테스트</h1>
+            
+            <!-- 진행 상황 -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <!-- 통계 -->
+            <div class="stats">
+                <div class="stat-item correct">
+                    <span class="stat-number" id="correctCount">0</span>
+                    <span class="stat-label">정답</span>
+                </div>
+                <div class="stat-item wrong">
+                    <span class="stat-number" id="wrongCount">0</span>
+                    <span class="stat-label">틀림</span>
+                </div>
+                <div class="stat-item remaining">
+                    <span class="stat-number" id="remainingCount">0</span>
+                    <span class="stat-label">남은 문제</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 옵션 -->
+        <div class="options">
+            <label class="option-toggle">
+                <input type="checkbox" id="autoPlayToggle" checked>
+                <span class="toggle-slider"></span>
+                <span class="option-label">발음 자동재생</span>
+            </label>
+        </div>
+
+        <!-- 문제 영역 -->
+        <main class="quiz-main" id="quizMain">
+            <!-- 네비게이션 버튼 -->
+            <div class="quiz-navigation" id="quizNavigation">
+                <button class="nav-btn prev-btn" id="prevBtn">
+                    <span>← 이전</span>
+                </button>
+                <button class="nav-btn replay-btn" id="replayBtn">
+                    <span>🔊 다시듣기</span>
+                </button>
+                <button class="nav-btn next-btn-nav" id="nextBtnNav">
+                    <span>다음 →</span>
+                </button>
+            </div>
+
+            <div class="quiz-card" id="quizCard">
+                <!-- 발음 듣기 버튼 -->
+                <button class="play-btn" id="playBtn">
+                    <span class="speaker-icon">🔊</span>
+                    <span>발음 듣기</span>
+                </button>
+
+                <!-- 한글 뜻 -->
+                <div class="meaning" id="meaning">
+                    뜻이 여기에 표시됩니다
+                </div>
+
+                <!-- 예문 (선택사항) -->
+                <div class="example" id="example">
+                    예문이 여기에 표시됩니다
+                </div>
+
+                <!-- 문제 타입 1: 텍스트 입력 -->
+                <div class="answer-section text-input-section" id="textInputSection">
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="textInput" 
+                            placeholder="영어 철자를 입력하세요"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                    </div>
+                    <button class="submit-btn" id="submitTextBtn">
+                        <span>확인</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+
+                <!-- 문제 타입 2: 음성 입력 -->
+                <div class="answer-section speech-input-section" id="speechInputSection" style="display: none;">
+                    <div class="speech-visual" id="speechVisual">
+                        <div class="mic-icon" id="micIcon">🎤</div>
+                        <div class="speech-text" id="speechText">마이크 버튼을 눌러 말해보세요</div>
+                    </div>
+                    <button class="mic-btn" id="micBtn">
+                        <span class="mic-btn-icon">🎤</span>
+                        <span>녹음 시작</span>
+                    </button>
+                    
+                    <!-- 또는 구분선 -->
+                    <div class="or-divider" style="text-align: center; margin: 20px 0; color: #9ca3af; font-size: 14px; font-weight: 600;">또는 텍스트 입력</div>
+                    
+                    <!-- 텍스트 입력 (텍스트 퀴즈와 동일한 디자인) -->
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="speechTextInput" 
+                            placeholder="영어 철자를 입력하세요"
+                            autocomplete="off"
+                            spellcheck="false"
+                            style="width: 100%; padding: 18px 20px; font-size: 20px; border: 2px solid #e5e7eb; border-radius: 12px; text-align: center; transition: all 0.3s ease; font-weight: 500;"
+                        >
+                    </div>
+                    
+                    <button class="submit-btn" id="submitSpeechBtn" style="display: none;">
+                        <span>확인</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </div>
+
+                <!-- 피드백 영역 -->
+                <div class="feedback" id="feedback"></div>
+            </div>
+
+            <!-- 다음 문제 버튼 -->
+            <button class="next-btn" id="nextBtn" style="display: none;">
+                다음 문제 →
+            </button>
+        </main>
+
+        <!-- 결과 화면 -->
+        <div class="result-screen" id="resultScreen" style="display: none;">
+            <div class="result-card">
+                <div class="result-icon">🎉</div>
+                <h2>테스트 완료!</h2>
+                
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <span class="result-stat-number correct" id="finalCorrect">0</span>
+                        <span class="result-stat-label">정답</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-number wrong" id="finalWrong">0</span>
+                        <span class="result-stat-label">틀림</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="result-stat-number" id="finalScore">0%</span>
+                        <span class="result-stat-label">정답률</span>
+                    </div>
+                </div>
+
+                <!-- 틀린 문제 목록 -->
+                <div class="wrong-list" id="wrongList"></div>
+
+                <!-- 결과 버튼 -->
+                <div class="result-buttons">
+                    <button class="retry-wrong-btn" id="retryWrongBtn" style="display: none;">
+                        틀린 문제 다시 풀기
+                    </button>
+                    <button class="go-home-btn" id="goHomeBtn">
+                        다시 시작하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="quiz.js"></script>
+</body>
+</html>

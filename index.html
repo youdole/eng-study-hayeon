@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 스펠링 테스트</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 햄버거 메뉴 -->
+    <div class="hamburger-menu" id="hamburgerMenu">
+        <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+        <div class="menu-dropdown" id="menuDropdown">
+            <a href="index.html">🏠 시작화면</a>
+            <a href="quiz.html">📝 문제풀이</a>
+            <button id="resetBtn">🔄 문제 리셋</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>✏️ 영어 스펠링 테스트</h1>
+        </header>
+
+        <main>
+            <!-- 문제 출제 방식 선택 -->
+            <section class="quiz-mode-section">
+                <h2>문제 출제 방식</h2>
+                <div class="quiz-mode-buttons">
+                    <button class="mode-btn active" data-mode="en-to-kr">
+                        <span class="mode-icon">🇺🇸 → 🇰🇷</span>
+                        <span class="mode-title">영어 → 한글</span>
+                        <span class="mode-desc">영단어/문장을 보고 한글 뜻 입력</span>
+                    </button>
+                    <button class="mode-btn" data-mode="kr-to-en">
+                        <span class="mode-icon">🇰🇷 → 🇺🇸</span>
+                        <span class="mode-title">한글 → 영어</span>
+                        <span class="mode-desc">한글 뜻을 보고 영단어/문장 입력</span>
+                    </button>
+                    <button class="mode-btn" data-mode="random">
+                        <span class="mode-icon">🔀</span>
+                        <span class="mode-title">랜덤</span>
+                        <span class="mode-desc">영어↔한글 랜덤 출제</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 문제 타입 선택 -->
+            <section class="quiz-type-section">
+                <h2>문제 타입 선택</h2>
+                <div class="quiz-type-buttons">
+                    <button class="type-btn active" data-type="text">
+                        <span class="type-number">타입 1</span>
+                        <span class="type-desc">영어 철자 입력 (TEXT)</span>
+                    </button>
+                    <button class="type-btn" data-type="speech">
+                        <span class="type-number">타입 2</span>
+                        <span class="type-desc">음성으로 말하기 (STT)</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- OCR 이미지 업로드 -->
+            <section class="upload-section">
+                <h2>문제 이미지 업로드</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <div class="upload-label" id="uploadLabel">
+                        <span class="upload-icon">📷</span>
+                        <span class="upload-text">이미지를 선택하거나 드래그하세요</span>
+                        <span class="upload-subtext">(단어, 뜻, 예문이 포함된 이미지)</span>
+                    </div>
+                </div>
+                <div class="uploaded-preview" id="uploadedPreview"></div>
+                
+                <!-- 수동 입력 버튼 -->
+                <div class="manual-input-buttons" style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="manual-input-btn" id="manualInputABtn" style="flex: 1; padding: 12px; background: white; color: #10b981; border: 2px solid #10b981; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        ✍️ A타입 수동 입력
+                    </button>
+                    <button class="manual-input-btn" id="manualInputBBtn" style="flex: 1; padding: 12px; background: white; color: #8b5cf6; border: 2px solid #8b5cf6; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                        ✍️ B타입 수동 입력
+                    </button>
+                </div>
+                
+                <!-- 인식 결과 확인 버튼 -->
+                <button class="view-questions-btn" id="viewQuestionsBtn" style="display: none;">
+                    📋 인식된 문제 확인하기
+                </button>
+                
+                <!-- 문제 지우기 버튼 -->
+                <button class="clear-questions-btn" id="clearQuestionsBtn" style="display: none; width: 100%; padding: 12px; margin-top: 10px; background: #ef4444; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">
+                    🗑️ 인식된 문제 지우기
+                </button>
+            </section>
+
+            <!-- 인식 결과 확인 모달 -->
+            <div class="modal" id="questionsModal" style="display: none;">
+                <div class="modal-content">
+                    <h3>인식된 문제 목록</h3>
+                    <div class="questions-list" id="questionsList"></div>
+                    <div class="modal-buttons" id="modalButtons">
+                        <button class="modal-btn close-btn" id="closeModalBtn">닫기</button>
+                        <button class="modal-btn edit-btn" id="editModalBtn">편집하기</button>
+                    </div>
+                    <div class="modal-edit-buttons" id="modalEditButtons" style="display: none;">
+                        <button class="modal-btn cancel-btn" id="cancelEditBtn">취소</button>
+                        <button class="modal-btn save-btn" id="saveEditBtn">완료</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 문제 타입 선택 (A/B) -->
+            <section class="problem-type-section" id="problemTypeSection" style="display: none;">
+                <h2>문제 유형 선택</h2>
+                <div class="problem-type-buttons">
+                    <button class="problem-type-btn active" data-problem-type="A">
+                        <span class="type-badge">A</span>
+                        <span class="type-title">단어 + 뜻</span>
+                        <span class="type-desc">단어와 한글 뜻만 학습</span>
+                    </button>
+                    <button class="problem-type-btn" data-problem-type="B">
+                        <span class="type-badge">B</span>
+                        <span class="type-title">예문 학습</span>
+                        <span class="type-desc">영어 예문과 한글 해석 학습</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 시작 버튼 -->
+            <section class="start-section">
+                <button class="start-btn" id="startBtn">
+                    <span>시작하기</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+                <button class="sample-btn" id="sampleBtn">
+                    <span>샘플 테스트 (5문제)</span>
+                </button>
+            </section>
+
+            <!-- 안내 문구 -->
+            <section class="info-section">
+                <div class="info-box">
+                    <h3>📌 사용 방법</h3>
+                    <ol>
+                        <li>원하는 문제 타입을 선택하세요</li>
+                        <li>단어 목록 이미지를 업로드하세요</li>
+                        <li>시작 버튼을 눌러 학습을 시작하세요</li>
+                        <li>또는 샘플 테스트로 먼저 체험해보세요</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

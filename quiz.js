@@ -101,10 +101,27 @@ function goBackToQuizSetup() {
 
 // ==================== TTS 초기화 ====================
 function initializeTTS() {
-    // 음성 로드 대기
-    if (speechSynthesis.getVoices().length === 0) {
-        speechSynthesis.addEventListener('voiceschanged', selectVoice);
+    // 음성 로드 대기 (모바일에서는 늦게 로드될 수 있음)
+    const voices = speechSynthesis.getVoices();
+    
+    if (voices.length === 0) {
+        console.log('⏳ 음성 로딩 중...');
+        // voiceschanged 이벤트 리스너 등록
+        speechSynthesis.addEventListener('voiceschanged', () => {
+            console.log('✅ 음성 로드 완료!');
+            selectVoice();
+        });
+        
+        // 모바일을 위한 추가 타이머 (일부 기기에서 이벤트가 안 올 수 있음)
+        setTimeout(() => {
+            const voicesRetry = speechSynthesis.getVoices();
+            if (voicesRetry.length > 0 && !currentVoice) {
+                console.log('⏰ 타이머로 음성 재시도');
+                selectVoice();
+            }
+        }, 500);
     } else {
+        console.log('✅ 음성 이미 로드됨');
         selectVoice();
     }
 }
@@ -116,8 +133,15 @@ function initializeVoiceSelector() {
     voiceRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             preferredGender = e.target.value;
-            console.log('음성 성별 변경:', preferredGender);
-            selectVoice(); // 음성 다시 선택
+            console.log('🎙️ 음성 성별 변경:', preferredGender);
+            
+            // 음성 다시 선택
+            selectVoice();
+            
+            // 변경된 음성으로 테스트 발음 (선택 사항)
+            // setTimeout(() => {
+            //     speakText('Hello', 'en-US');
+            // }, 100);
         });
     });
 }
@@ -255,23 +279,67 @@ function initializeNavigation() {
 
 // ==================== 여성 영어 음성 선택 ====================
 function selectVoice() {
+    // 음성 리스트 새로고침 (모바일에서 중요!)
     const voices = speechSynthesis.getVoices();
     
+    console.log('=== 음성 선택 시작 ===');
+    console.log('사용 가능한 음성 개수:', voices.length);
+    console.log('선호 성별:', preferredGender);
+    
+    if (voices.length === 0) {
+        console.warn('음성 리스트가 비어있습니다. 나중에 다시 시도합니다.');
+        return;
+    }
+    
+    // 영어 음성만 필터링
+    const englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
+    console.log('영어 음성 개수:', englishVoices.length);
+    
     if (preferredGender === 'female') {
-        // 여성 음성 우선순위: Google UK English Female > Microsoft Female > 기타 여성 음성
-        currentVoice = voices.find(voice => 
-            voice.lang.startsWith('en') && 
-            (voice.name.includes('Female') || voice.name.includes('Google'))
-        ) || voices.find(voice => voice.lang.startsWith('en'));
+        // 여성 음성 찾기
+        // 1순위: 이름에 'Female' 포함
+        let femaleVoice = englishVoices.find(voice => 
+            voice.name.toLowerCase().includes('female')
+        );
+        
+        // 2순위: Google 음성 (보통 여성)
+        if (!femaleVoice) {
+            femaleVoice = englishVoices.find(voice => 
+                voice.name.toLowerCase().includes('google') &&
+                !voice.name.toLowerCase().includes('male')
+            );
+        }
+        
+        // 3순위: Samantha, Victoria, Karen 등 여성 이름
+        if (!femaleVoice) {
+            const femaleNames = ['samantha', 'victoria', 'karen', 'susan', 'fiona'];
+            femaleVoice = englishVoices.find(voice => 
+                femaleNames.some(name => voice.name.toLowerCase().includes(name))
+            );
+        }
+        
+        currentVoice = femaleVoice || englishVoices[0];
     } else {
-        // 남성 음성 우선순위: Male > 기타
-        currentVoice = voices.find(voice => 
-            voice.lang.startsWith('en') && 
-            voice.name.includes('Male')
-        ) || voices.find(voice => voice.lang.startsWith('en'));
+        // 남성 음성 찾기
+        // 1순위: 이름에 'Male' 포함
+        let maleVoice = englishVoices.find(voice => 
+            voice.name.toLowerCase().includes('male') &&
+            !voice.name.toLowerCase().includes('female')
+        );
+        
+        // 2순위: Daniel, Alex, Fred 등 남성 이름
+        if (!maleVoice) {
+            const maleNames = ['daniel', 'alex', 'fred', 'tom', 'james'];
+            maleVoice = englishVoices.find(voice => 
+                maleNames.some(name => voice.name.toLowerCase().includes(name))
+            );
+        }
+        
+        currentVoice = maleVoice || englishVoices[0];
     }
 
-    console.log('선택된 음성:', currentVoice?.name, '성별:', preferredGender);
+    console.log('✅ 선택된 음성:', currentVoice?.name);
+    console.log('음성 언어:', currentVoice?.lang);
 }
 
 // ==================== TTS 음성 출력 ====================
@@ -289,13 +357,22 @@ function speakText(text, language = 'en-US') {
         utterance.voice = koreanVoice || currentVoice;
         utterance.lang = 'ko-KR';
     } else {
-        // 영어 음성
+        // 영어 음성 - 매번 최신 음성 리스트에서 선택
+        const voices = speechSynthesis.getVoices();
+        
+        if (voices.length > 0 && (!currentVoice || voices.indexOf(currentVoice) === -1)) {
+            // currentVoice가 없거나 목록에 없으면 다시 선택
+            selectVoice();
+        }
+        
         utterance.voice = currentVoice;
         utterance.lang = 'en-US';
+        
+        console.log('🔊 발음:', text, '| 음성:', currentVoice?.name);
     }
     
-    utterance.rate = 0.85; // 속도 (5% 느리게)
-    utterance.pitch = 1.2; // 음높이
+    utterance.rate = 0.85; // 속도 (15% 느리게)
+    utterance.pitch = 1.0; // 음높이 (자연스럽게)
     utterance.volume = 1; // 볼륨
 
     speechSynthesis.speak(utterance);

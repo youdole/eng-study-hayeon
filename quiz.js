@@ -12,6 +12,7 @@ let quizStarted = false;
 // TTS 관련
 let speechSynthesis = window.speechSynthesis;
 let currentVoice = null;
+let preferredGender = 'female'; // 기본값: 여성
 
 // STT 관련
 let recognition = null;
@@ -53,9 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMenu();
     initializeTTS();
     initializeSTT();
+    initializeVoiceSelector(); // 음성 선택 초기화
     initializeNavigation();
     loadQuizData();
-    initializeQuizSetup(); // loadQuizData 후에 실행
+    initializeQuizSetup();
+    setupQuizEventListeners(); // 이벤트 리스너 연결!
 });
 
 // ==================== 햄버거 메뉴 ====================
@@ -104,6 +107,19 @@ function initializeTTS() {
     } else {
         selectVoice();
     }
+}
+
+// ==================== 음성 선택 초기화 ====================
+function initializeVoiceSelector() {
+    const voiceRadios = document.querySelectorAll('input[name="voiceGender"]');
+    
+    voiceRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            preferredGender = e.target.value;
+            console.log('음성 성별 변경:', preferredGender);
+            selectVoice(); // 음성 다시 선택
+        });
+    });
 }
 
 // ==================== 출제 방식 선택 초기화 ====================
@@ -241,13 +257,21 @@ function initializeNavigation() {
 function selectVoice() {
     const voices = speechSynthesis.getVoices();
     
-    // 우선순위: Google UK English Female > Microsoft Female > 기타 여성 음성
-    currentVoice = voices.find(voice => 
-        voice.lang.startsWith('en') && 
-        (voice.name.includes('Female') || voice.name.includes('Google'))
-    ) || voices.find(voice => voice.lang.startsWith('en'));
+    if (preferredGender === 'female') {
+        // 여성 음성 우선순위: Google UK English Female > Microsoft Female > 기타 여성 음성
+        currentVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            (voice.name.includes('Female') || voice.name.includes('Google'))
+        ) || voices.find(voice => voice.lang.startsWith('en'));
+    } else {
+        // 남성 음성 우선순위: Male > 기타
+        currentVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            voice.name.includes('Male')
+        ) || voices.find(voice => voice.lang.startsWith('en'));
+    }
 
-    console.log('선택된 음성:', currentVoice?.name);
+    console.log('선택된 음성:', currentVoice?.name, '성별:', preferredGender);
 }
 
 // ==================== TTS 음성 출력 ====================
@@ -597,49 +621,64 @@ function checkAnswerFlexible(userAnswer, correctAnswer) {
         return true;
     }
     
-    // 2. 정답에 '/' 구분자가 있는 경우 (예: "눈/산사태")
-    if (cleanCorrect.includes('/')) {
-        const alternatives = cleanCorrect.split('/').map(a => a.trim());
-        if (alternatives.some(alt => cleanUser === alt)) {
-            return true;
+    // 2. 한글 정답인 경우 - 유사도 체크 강화
+    if (/[가-힣]/.test(cleanCorrect)) {
+        // 2-1. 사용자가 여러 단어를 입력한 경우 (쉼표, 슬래시, 세미콜론으로 구분)
+        const userWords = cleanUser.split(/[,/;]/).map(w => w.trim()).filter(w => w.length > 0);
+        
+        // 사용자 입력 중 하나라도 정답과 일치하면 정답
+        for (const word of userWords) {
+            // 완전 일치
+            if (word === cleanCorrect) {
+                return true;
+            }
+            
+            // 정답이 사용자가 입력한 단어에 포함되어 있으면 정답
+            if (cleanCorrect.includes(word) && word.length >= 2) {
+                return true;
+            }
+            
+            // 마지막 글자 제거 후 비교 (조사 차이 무시)
+            if (word.length >= 2 && cleanCorrect.length >= 2) {
+                const wordWithoutLast = word.slice(0, -1);
+                const correctWithoutLast = cleanCorrect.slice(0, -1);
+                if (wordWithoutLast === correctWithoutLast) {
+                    return true;
+                }
+            }
+        }
+        
+        // 2-2. 정답에 구분자가 있는 경우 (예: "기분이 언짢은/짜증난")
+        if (cleanCorrect.includes('/') || cleanCorrect.includes(',') || cleanCorrect.includes(';')) {
+            const correctWords = cleanCorrect.split(/[,/;]/).map(w => w.trim());
+            
+            // 사용자 입력이 정답 단어 중 하나와 일치
+            for (const correctWord of correctWords) {
+                if (cleanUser === correctWord) {
+                    return true;
+                }
+                // 사용자가 입력한 여러 단어 중 하나가 정답 단어와 일치
+                for (const userWord of userWords) {
+                    if (userWord === correctWord) {
+                        return true;
+                    }
+                }
+            }
         }
     }
     
-    // 3. 정답에 ', ' 구분자가 있는 경우 (예: "잠깐 보다, 흘끗 보다")
-    if (cleanCorrect.includes(',')) {
-        const alternatives = cleanCorrect.split(',').map(a => a.trim());
-        if (alternatives.some(alt => cleanUser === alt)) {
+    // 3. 영어 정답인 경우 - 기존 엄격한 검사 유지
+    if (/^[a-z\s]+$/.test(cleanCorrect)) {
+        // 영어는 완전 일치만 인정
+        if (cleanUser === cleanCorrect) {
             return true;
         }
-    }
-    
-    // 4. 부분 일치 (사용자 답이 정답에 포함되거나, 정답이 사용자 답에 포함)
-    // 단, 3글자 이상일 때만
-    if (cleanUser.length >= 3 && cleanCorrect.length >= 3) {
-        if (cleanCorrect.includes(cleanUser) || cleanUser.includes(cleanCorrect)) {
-            return true;
-        }
-    }
-    
-    // 5. 영어의 경우 복수형, 과거형 등 유사 형태 인정
-    if (/^[a-z\s]+$/.test(cleanUser) && /^[a-z\s]+$/.test(cleanCorrect)) {
-        // s, ed, ing 등 접미사 제거 후 비교
+        
+        // 복수형, 과거형 등 유사 형태만 인정
         const userRoot = cleanUser.replace(/(s|ed|ing)$/g, '');
         const correctRoot = cleanCorrect.replace(/(s|ed|ing)$/g, '');
         if (userRoot === correctRoot) {
             return true;
-        }
-    }
-    
-    // 6. 한글의 경우 조사 차이 무시 (예: "무너지다" vs "무너진다")
-    if (/[가-힣]/.test(cleanUser) && /[가-힣]/.test(cleanCorrect)) {
-        // 마지막 글자 제거 후 비교 (조사 차이 무시)
-        if (cleanUser.length >= 2 && cleanCorrect.length >= 2) {
-            const userWithoutLast = cleanUser.slice(0, -1);
-            const correctWithoutLast = cleanCorrect.slice(0, -1);
-            if (userWithoutLast === correctWithoutLast) {
-                return true;
-            }
         }
     }
     
